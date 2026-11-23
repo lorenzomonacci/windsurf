@@ -52,6 +52,24 @@
   .meteo .sole { margin-left: 8px; }
   .meteo .ico { width: 18px; height: 18px; vertical-align: -4px; margin: 0 3px 0 6px; fill: none;
                 stroke: #f0a030; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cal { display: grid; grid-template-columns: 34px repeat(5, minmax(0, 1fr)); gap: 4px; text-align: center; }
+  .cal .h { font-size: 12px; color: var(--muted); padding-bottom: 2px; }
+  .cal .h b { display: block; color: var(--ink); font-size: 13px; }
+  .cal .t { font-size: 11px; color: var(--muted); align-self: center; text-align: left; }
+  .cal .c { background: var(--chip); border-radius: 8px; padding: 6px 2px; min-height: 46px; }
+  .cal .c.top { outline: 2px solid #f0a030; }
+  .cal .c.pass { opacity: .35; }
+  .cal .s { white-space: nowrap; line-height: 0; }
+  .cal .s svg { width: 14px; height: 14px; margin: 0 1px; }
+  .cal .v { font-size: 11px; color: var(--muted); margin-top: 4px; white-space: nowrap; }
+  .cal .v i { font-style: normal; }
+  .cal .v .o i:last-child { display: none; }
+  @media (max-width: 560px) {
+    .cal .v .o { display: block; }
+    .cal .v .o i:first-child { display: none; }
+    .cal .v .o i:last-child { display: inline; }
+  }
+  .star-on { fill: #f0a030; } .star-off { fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .5; }
   .staz { display: flex; align-items: center; gap: 16px; background: var(--chip); border-radius: 8px;
           padding: 12px 14px; margin-bottom: 12px; }
   .staz .big { font-size: 30px; font-weight: 700; line-height: 1.1; }
@@ -70,6 +88,14 @@
 </header>
 
 <main>
+  <!-- 0. PROSSIMI 5 GIORNI -->
+  <section id="giorni">
+    <h2>Quando uscire</h2>
+    <div class="cal" id="cal"></div>
+    <p class="sub" id="calTop" style="margin:10px 0 0"></p>
+    <p class="sub" style="margin:2px 0 0">Vento ICON-2I per i primi giorni, poi ECMWF. Onda ECMWF. Voti secondo i tuoi gusti.</p>
+  </section>
+
   <!-- 1. ADESSO -->
   <section id="live">
     <h2>Adesso a Calambrone</h2>
@@ -228,6 +254,114 @@ var SVG_TRAMONTO = svgSole('M16 5l-4 4-4-4', 'Tramonto');
       }).catch(function () {});
   }
   carica(); setInterval(carica, 15 * 60000);
+})();
+
+/* ---------- Calendario 5 giorni: voti da 0 a 3 stelle ----------
+   Regole ricavate dai voti di Lorenzo (23/11/2026):
+   vento medio <8 kt = 0, 8-9 = 1, 10-14 = 2, da 15 in su = 3 (anche 25 kt va bene col mare piatto);
+   onda fino a 1,0 m non conta, 1,1-1,2 m toglie una stella, da 1,3 m massimo una stella, da 2 m non si esce;
+   direzione e raffiche non contano; un turno vale il voto tenuto per almeno 2 ore. */
+(function () {
+  var LAT = 43.584, LON = 10.299, GIORNI = 5;
+  var PUNTI = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  var GG = ['dom','lun','mar','mer','gio','ven','sab'];
+  var STELLA = 'M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z';
+
+  function votoOra(kt, onda) {
+    var v = kt < 8 ? 0 : kt < 10 ? 1 : kt < 15 ? 2 : 3;
+    if (onda == null) return v;
+    if (onda >= 2.0) return 0;
+    if (onda >= 1.3) return Math.min(v, 1);
+    if (onda > 1.0) return Math.max(0, v - 1);
+    return v;
+  }
+  function votoTurno(voti) {
+    for (var s = 3; s >= 1; s--) {
+      if (voti.filter(function (x) { return x >= s; }).length >= 2) return s;
+    }
+    return voti.some(function (x) { return x >= 1; }) ? 1 : 0;
+  }
+  function stelle(n) {
+    var h = '';
+    for (var i = 0; i < 3; i++) h += '<svg viewBox="0 0 24 24"><path class="' + (i < n ? 'star-on' : 'star-off') + '" d="' + STELLA + '"/></svg>';
+    return h;
+  }
+  function direzioneMedia(gradi) {
+    var x = 0, y = 0;
+    gradi.forEach(function (g) { x += Math.sin(g * Math.PI / 180); y += Math.cos(g * Math.PI / 180); });
+    var g = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360;
+    return PUNTI[Math.round(g / 22.5) % 16];
+  }
+  function num(x) { return String(Math.round(x * 10) / 10).replace('.', ','); }
+
+  function disegna(w, m) {
+    var h = w.hourly, ore = {};
+    h.time.forEach(function (t, i) {
+      var kt = h.wind_speed_10m_italia_meteo_arpae_icon_2i[i], dir = h.wind_direction_10m_italia_meteo_arpae_icon_2i[i];
+      var mod = 'ICON-2I';
+      if (kt == null) { kt = h.wind_speed_10m_ecmwf_ifs025[i]; dir = h.wind_direction_10m_ecmwf_ifs025[i]; mod = 'ECMWF'; }
+      ore[t] = { kt: kt, dir: dir, mod: mod };
+    });
+    m.hourly.time.forEach(function (t, i) { if (ore[t]) ore[t].onda = m.hourly.wave_height[i]; });
+
+    var adesso = new Date(), cal = document.getElementById('cal');
+    var html = '<div></div>', celle = { m: '', p: '' }, migliore = null;
+    for (var d = 0; d < GIORNI; d++) {
+      var giorno = w.daily.time[d], tram = w.daily.sunset[d];
+      var dt = new Date(giorno + 'T12:00');
+      html += '<div class="h">' + (d === 0 ? 'oggi' : GG[dt.getDay()]) + '<b>' + dt.getDate() + '</b></div>';
+      [['m', 9, 13, 'mattina'], ['p', 13, 24, 'pomeriggio']].forEach(function (turno) {
+        var sel = [];
+        for (var o = turno[1]; o < turno[2]; o++) {
+          var t = giorno + 'T' + (o < 10 ? '0' : '') + o + ':00';
+          if (t >= tram || !ore[t] || ore[t].kt == null) continue;
+          sel.push(ore[t]);
+        }
+        var finito = new Date(giorno + 'T' + (turno[0] === 'm' ? '13:00' : tram.slice(11))) < adesso;
+        if (!sel.length) { celle[turno[0]] += '<div class="c pass"></div>'; return; }
+        var voti = sel.map(function (x) { return votoOra(x.kt, x.onda); });
+        var voto = votoTurno(voti);
+        var kt = sel.reduce(function (a, x) { return a + x.kt; }, 0) / sel.length;
+        var onde = sel.map(function (x) { return x.onda; }).filter(function (x) { return x != null; });
+        var onda = onde.length ? Math.max.apply(null, onde) : null;
+        var dir = direzioneMedia(sel.map(function (x) { return x.dir; }));
+        var id = 'c' + d + turno[0];
+        celle[turno[0]] += '<div class="c' + (finito ? ' pass' : '') + '" id="' + id + '" title="' + turno[3] + ': ' +
+          Math.round(kt) + ' kt da ' + dir + (onda != null ? ', onda ' + num(onda) + ' m' : '') + ' (' + sel[0].mod + ')">' +
+          '<div class="s">' + stelle(voto) + '</div><div class="v">' + Math.round(kt) + ' ' + dir +
+          (onda != null ? '<span class="o"><i> · </i>' + num(onda) + '<i> m</i></span>' : '') + '</div></div>';
+        if (!finito && voto > 0 && (!migliore || voto > migliore.voto || (voto === migliore.voto && kt > migliore.kt)))
+          migliore = { voto: voto, kt: kt, dir: dir, onda: onda, id: id,
+                       quando: (d === 0 ? 'oggi' : GG[dt.getDay()] + ' ' + dt.getDate()) + ' ' + turno[3] };
+      });
+    }
+    cal.innerHTML = html + '<div class="t">matt.</div>' + celle.m + '<div class="t">pom.</div>' + celle.p;
+    var top = document.getElementById('calTop');
+    if (migliore) {
+      document.getElementById(migliore.id).classList.add('top');
+      top.innerHTML = '<b style="color:var(--ink)">Il migliore: ' + migliore.quando + '</b>, ' + Math.round(migliore.kt) +
+        ' kt da ' + migliore.dir + (migliore.onda != null ? ', onda ' + num(migliore.onda) + ' m' : '') + '.';
+    } else {
+      top.textContent = 'Nei prossimi 5 giorni niente che valga l\'uscita.';
+    }
+  }
+
+  function carica() {
+    var base = 'latitude=' + LAT + '&longitude=' + LON + '&timezone=Europe%2FRome&forecast_days=' + (GIORNI + 1);
+    Promise.all([
+      fetch('https://api.open-meteo.com/v1/forecast?' + base + '&hourly=wind_speed_10m,wind_direction_10m' +
+            '&models=italia_meteo_arpae_icon_2i,ecmwf_ifs025&wind_speed_unit=kn&daily=sunset')
+        .then(function (r) { return r.json(); }),
+      fetch('https://marine-api.open-meteo.com/v1/marine?' + base + '&hourly=wave_height')
+        .then(function (r) { return r.json(); })
+    ]).then(function (x) {
+      // il daily arriva senza suffisso del modello solo se uno dei due lo fornisce: prendo il primo disponibile
+      var dl = x[0].daily;
+      if (!dl.sunset) dl.sunset = dl.sunset_italia_meteo_arpae_icon_2i.map(function (s, i) { return s || dl.sunset_ecmwf_ifs025[i]; });
+      disegna(x[0], x[1]);
+    }).catch(function () { document.getElementById('calTop').textContent = 'Previsioni non disponibili ora.'; });
+  }
+  carica(); setInterval(carica, 60 * 60000);
 })();
 
 /* ---------- Porto di Livorno: forza e direzione via proxy su muditabrewery.com ---------- */
