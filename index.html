@@ -49,6 +49,10 @@
   .crop { overflow: hidden; border-radius: 8px; background: #000; }
   .crop iframe { height: 1800px; border-radius: 0; }
   #vedettaDati { pointer-events: none; }
+  .staz { display: flex; align-items: center; gap: 16px; background: var(--chip); border-radius: 8px;
+          padding: 12px 14px; margin-bottom: 12px; }
+  .staz .big { font-size: 30px; font-weight: 700; line-height: 1.1; }
+  .freccia { width: 56px; height: 56px; flex: none; fill: var(--accent); transition: transform .6s; }
   .cam { width: 100%; height: auto; display: block; border-radius: 8px; }
   details summary { cursor: pointer; font-weight: 600; }
   details[open] summary { margin-bottom: 10px; }
@@ -82,7 +86,15 @@
 
   <section id="livorno">
     <h2>Porto di Livorno</h2>
-    <p class="sub">Webcam dell'Avvisatore Marittimo. Forza e direzione del vento sul loro sito oggi non funzionano. <a href="https://www.livornometeo.it/" target="_blank" rel="noopener">Apri LivornoMeteo</a></p>
+    <p class="sub">Avvisatore Marittimo, dati di LivornoMeteo. <a href="https://www.livornometeo.it/" target="_blank" rel="noopener">Apri LivornoMeteo</a></p>
+    <div class="staz" id="lvDati">
+      <svg class="freccia" id="lvFreccia" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L30 33 L20 26 L10 33 Z"/></svg>
+      <div>
+        <div class="big" id="lvKt">…</div>
+        <div id="lvDir"></div>
+        <div class="sub" id="lvOra" style="margin:4px 0 0"></div>
+      </div>
+    </div>
     <img id="camLivorno" class="cam" alt="Webcam porto di Livorno" src="https://bari.portnet.it/images/livornometeo.jpg">
   </section>
 
@@ -161,6 +173,33 @@
   fit(); window.addEventListener('resize', fit);
   var img = document.getElementById('camLivorno'), base = img.src;
   setInterval(function () { img.src = base + '?t=' + Date.now(); }, 120000);
+})();
+
+/* ---------- Porto di Livorno: forza e direzione via proxy su muditabrewery.com ---------- */
+(function () {
+  var PUNTI = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  var BF = { 'Calm': 'Calma', 'Light air': 'Bava di vento', 'Light breeze': 'Brezza leggera',
+             'Gentle breeze': 'Brezza tesa', 'Moderate breeze': 'Vento moderato', 'Fresh breeze': 'Vento teso',
+             'Strong breeze': 'Vento fresco', 'Near gale': 'Vento forte', 'Gale': 'Burrasca',
+             'Strong gale': 'Burrasca forte', 'Storm': 'Tempesta' };
+  function carica() {
+    fetch('https://muditabrewery.com/windsurf/livorno.php?t=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) throw 0;
+        document.getElementById('lvKt').textContent = d.kt.toFixed(1).replace('.', ',') + ' kt';
+        var bf = d.beaufort ? ' · ' + (BF[d.beaufort] || d.beaufort) : '';
+        document.getElementById('lvDir').textContent = 'da ' + PUNTI[Math.round(d.deg / 22.5) % 16] + ' (' + d.deg + '°)' + bf;
+        var ora = d.ora ? 'Lettura delle ' + d.ora : '';
+        if (d.raffica_max) ora += ' · raffica max oggi ' + d.raffica_max.toFixed(1).replace('.', ',') + ' kt alle ' + d.raffica_ora;
+        document.getElementById('lvOra').textContent = ora;
+        // la freccia indica dove va il vento
+        document.getElementById('lvFreccia').style.transform = 'rotate(' + (d.deg + 180) + 'deg)';
+      })
+      .catch(function () { document.getElementById('lvKt').textContent = 'n.d.';
+                           document.getElementById('lvDir').textContent = 'LivornoMeteo non risponde'; });
+  }
+  carica(); setInterval(carica, 60000);
 })();
 
 /* ---------- Windguru ---------- */
