@@ -45,6 +45,11 @@
   input[type=range] { width: 100%; accent-color: var(--accent); }
   .when { font-weight: 600; }
   .lamma img { width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }
+  /* iframe più alti del loro contenuto: niente scroll interno, il dito scorre la pagina */
+  .crop { overflow: hidden; border-radius: 8px; background: #000; }
+  .crop iframe { height: 1800px; border-radius: 0; }
+  #vedettaDati { pointer-events: none; }
+  .cam { width: 100%; height: auto; display: block; border-radius: 8px; }
   details summary { cursor: pointer; font-weight: 600; }
   details[open] summary { margin-bottom: 10px; }
 </style>
@@ -67,16 +72,18 @@
   </section>
 
   <section>
-    <h2>Webcam e ultima ora</h2>
-    <p class="sub">Webcam Vedetta Calambrone, con il grafico del vento degli ultimi 60 minuti sotto.</p>
-    <iframe title="Webcam Calambrone" style="height:980px" allow="autoplay; fullscreen"
-            src="https://vedetta.org/vedetta/calambrone2/index.php"></iframe>
+    <h2>Webcam Calambrone</h2>
+    <p class="sub">Vedetta. <a href="https://vedetta.org/vedetta/calambrone2/index.php" target="_blank" rel="noopener">Apri con il grafico dell'ultima ora</a></p>
+    <div class="crop" id="camCrop">
+      <iframe title="Webcam Calambrone" scrolling="no" allow="autoplay; fullscreen"
+              src="https://vedetta.org/vedetta/calambrone2/index.php"></iframe>
+    </div>
   </section>
 
   <section id="livorno">
     <h2>Porto di Livorno</h2>
-    <p class="sub">Stazione dell'Avvisatore Marittimo su LivornoMeteo. <a href="https://www.livornometeo.it/" target="_blank" rel="noopener">Apri il sito</a></p>
-    <iframe title="LivornoMeteo" style="height:900px" src="https://www.livornometeo.it/"></iframe>
+    <p class="sub">Webcam dell'Avvisatore Marittimo. Forza e direzione del vento sul loro sito oggi non funzionano. <a href="https://www.livornometeo.it/" target="_blank" rel="noopener">Apri LivornoMeteo</a></p>
+    <img id="camLivorno" class="cam" alt="Webcam porto di Livorno" src="https://bari.portnet.it/images/livornometeo.jpg">
   </section>
 
   <!-- 2. WINDGURU -->
@@ -145,6 +152,15 @@
   var f = document.getElementById('vedettaDati');
   var base = f.src;
   setInterval(function () { f.src = base + '?t=' + Date.now(); }, 60000);
+})();
+
+/* ---------- Webcam: mostra solo il video (16:9 + margine della pagina Vedetta) ---------- */
+(function () {
+  var box = document.getElementById('camCrop');
+  function fit() { var w = box.clientWidth; box.style.height = Math.round((w - 16) * 9 / 16 + 14) + 'px'; }
+  fit(); window.addEventListener('resize', fit);
+  var img = document.getElementById('camLivorno'), base = img.src;
+  setInterval(function () { img.src = base + '?t=' + Date.now(); }, 120000);
 })();
 
 /* ---------- Windguru ---------- */
