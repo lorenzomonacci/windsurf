@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windsurf bros ❤️</title>
+<meta name="robots" content="noindex">
+<style>
+  :root {
+    --bg: #f3f5f7; --card: #ffffff; --ink: #14202b; --muted: #5b6b78;
+    --line: #dde3e8; --accent: #0a6fb5; --chip: #e8f1f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0e151b; --card: #17212a; --ink: #e6edf2; --muted: #93a3b0;
+            --line: #26333e; --accent: #4fb0f0; --chip: #1d2d3a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg);
+           border-bottom: 1px solid var(--line); }
+  .bar { max-width: 1100px; margin: 0 auto; padding: 10px 16px;
+         display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .bar h1 { font-size: 18px; margin: 0; margin-right: auto; }
+  nav a { color: var(--accent); text-decoration: none; font-size: 14px; margin-left: 10px; }
+  html, body { overflow-x: hidden; }
+  main { max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 14px;
+         grid-template-columns: minmax(0, 1fr); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+            min-width: 0; overflow: hidden; }
+  .wg > div, #wgAltroBox { max-width: 100%; overflow-x: auto; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+  .sub a { color: var(--accent); }
+  iframe { border: 0; width: 100%; display: block; background: #fff; border-radius: 8px; }
+  .grid2 { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+  .wg + .wg { margin-top: 18px; }
+  .wg h3 { font-size: 14px; margin: 0 0 6px; }
+  .wg h3 span { color: var(--muted); font-weight: normal; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  select, button { font: inherit; color: var(--ink); background: var(--chip);
+                   border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  button { cursor: pointer; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .when { font-weight: 600; }
+  .lamma img { width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Windsurf bros ❤️</h1>
+    <nav><a href="#live">Live</a><a href="#livorno">Livorno</a><a href="#wg">Windguru</a><a href="#lamma">LaMMA</a></nav>
+  </div>
+</header>
+
+<main>
+  <!-- 1. ADESSO -->
+  <section id="live">
+    <h2>Adesso a Calambrone</h2>
+    <p class="sub">Anemometro Vedetta (lo stesso della pagina Oasi del Mare).</p>
+    <iframe id="vedettaDati" title="Vento live Calambrone" scrolling="no" style="height:240px"
+            src="https://vedetta.org/image-client/calambrone/meteo/dati_meteo.html"></iframe>
+  </section>
+
+  <section>
+    <h2>Webcam e ultima ora</h2>
+    <p class="sub">Webcam Vedetta Calambrone, con il grafico del vento degli ultimi 60 minuti sotto.</p>
+    <iframe title="Webcam Calambrone" style="height:980px" allow="autoplay; fullscreen"
+            src="https://vedetta.org/vedetta/calambrone2/index.php"></iframe>
+  </section>
+
+  <section id="livorno">
+    <h2>Porto di Livorno</h2>
+    <p class="sub">Stazione dell'Avvisatore Marittimo su LivornoMeteo. <a href="https://www.livornometeo.it/" target="_blank" rel="noopener">Apri il sito</a></p>
+    <iframe title="LivornoMeteo" style="height:900px" src="https://www.livornometeo.it/"></iframe>
+  </section>
+
+  <!-- 2. WINDGURU -->
+  <section id="wg">
+    <h2>Windguru · Calambrone</h2>
+    <p class="sub">Nodi. Dal più vicino al più lontano. <a href="https://www.windguru.cz/48998" target="_blank" rel="noopener">Apri su Windguru</a></p>
+    <div class="wg"><h3>ICON-CH 1 km <span>· prossime 24 h</span></h3><div data-wg-model="114" data-wg-hours="33"></div></div>
+    <div class="wg"><h3>ICON-2I 2,2 km <span>· 48 h</span></h3><div data-wg-model="104" data-wg-hours="72"></div></div>
+    <div class="wg"><h3>WG <span>· medio-lungo, con onda IFS-WAM 9 km</span></h3><div data-wg-model="100" data-wg-hours="240" data-wg-wave="118"></div></div>
+    <details class="wg">
+      <summary>Un altro modello</summary>
+      <div class="controls">
+        <select id="wgAltro">
+          <option value="52|51">AROME-FR 1,3 km</option>
+          <option value="120|60">C-LAEF 1 km</option>
+          <option value="107|72">ALADIN 2,3 km</option>
+          <option value="109|60">HARM-DK 2 km</option>
+          <option value="64|109">Zephr-HD 2,6 km</option>
+          <option value="43|75">ICON 7 km</option>
+          <option value="21|78">WRF 9 km</option>
+          <option value="117|240">IFS-HRES 9 km (ECMWF)</option>
+          <option value="3|240">GFS 13 km</option>
+          <option value="57|60">HARMONIE 5 km</option>
+          <option value="59|240">GDPS 15 km</option>
+          <option value="46|78">EWAM 5 km (onda)</option>
+          <option value="118|240">IFS-WAM 9 km (onda)</option>
+          <option value="84|240">GFS-Wave 16 km (onda)</option>
+        </select>
+      </div>
+      <div id="wgAltroBox"></div>
+    </details>
+  </section>
+
+  <!-- 3. LAMMA -->
+  <section id="lamma" class="lamma">
+    <h2>LaMMA · vento e mare costa</h2>
+    <p class="sub">Run delle <span id="lammaRun">00 UTC</span>. <a href="https://www.lamma.toscana.it/mare/modelli/vento-e-mare-costa.php" target="_blank" rel="noopener">Apri su LaMMA</a></p>
+    <div class="controls">
+      <select id="lammaCampo">
+        <option value="wind10">Vento 10 m</option>
+        <option value="swh">Altezza onda</option>
+        <option value="mwp">Periodo onda</option>
+        <option value="sswh">Altezza swell</option>
+        <option value="smwp">Periodo swell</option>
+      </select>
+      <select id="lammaArea">
+        <option value="AE">Livorno</option>
+        <option value="AD">Versilia</option>
+      </select>
+      <button id="lammaPrev" aria-label="Ora precedente">&lsaquo;</button>
+      <button id="lammaNow">Adesso</button>
+      <button id="lammaNext" aria-label="Ora successiva">&rsaquo;</button>
+      <span class="when" id="lammaWhen"></span>
+    </div>
+    <input type="range" id="lammaStep" min="1" max="75" value="1">
+    <div class="grid2" style="margin-top:10px">
+      <img id="lammaImg" alt="Mappa LaMMA">
+      <img id="lammaImg2" alt="Mappa LaMMA onda">
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---------- Vedetta: ricarica i dati ogni minuto ---------- */
+(function () {
+  var f = document.getElementById('vedettaDati');
+  var base = f.src;
+  setInterval(function () { f.src = base + '?t=' + Date.now(); }, 60000);
+})();
+
+/* ---------- Windguru ---------- */
+function wgWidget(box, model, hours, wave) {
+  box.innerHTML = '';
+  var uid = 'wg_fwdg_48998_' + model + '_' + Date.now();
+  var anchor = document.createElement('span');
+  anchor.id = uid;
+  box.appendChild(anchor);
+  var args = ['s=48998', 'm=' + model, 'uid=' + uid];
+  if (wave) args.push('mw=' + wave);
+  args = args.concat([ 'wj=knots', 'tj=c', 'waj=m', 'tij=cm',
+              'odh=0', 'doh=24', 'fhours=' + hours, 'hrsm=' + (hours > 80 ? 2 : 1),
+              'vt=forecasts', 'lng=it', 'idbs=1',
+              'p=WINDSPD,GUST,SMER,HTSGW,PERPW,DIRPW,TMPE,APCP1s,RATING']);
+  var s = document.createElement('script');
+  s.src = 'https://www.windguru.cz/js/widget.php?' + args.join('&');
+  box.appendChild(s);
+}
+document.querySelectorAll('[data-wg-model]').forEach(function (el) {
+  wgWidget(el, el.dataset.wgModel, +el.dataset.wgHours, el.dataset.wgWave);
+});
+(function () {
+  var sel = document.getElementById('wgAltro'), box = document.getElementById('wgAltroBox');
+  var det = sel.closest('details');
+  function show() { var v = sel.value.split('|'); wgWidget(box, v[0], +v[1]); }
+  sel.addEventListener('change', show);
+  det.addEventListener('toggle', function () { if (det.open && !box.firstChild) show(); });
+})();
+
+/* ---------- LaMMA ---------- */
+(function () {
+  var MODEL = 'ww3gnshrecm', MAX = 75;
+  // indici 1-61: ogni ora (0-60 h); 62-69: ogni 3 h; 70-75: ogni 6 h
+  function idxToH(i) { return i <= 61 ? i - 1 : (i <= 69 ? 60 + (i - 61) * 3 : 84 + (i - 69) * 6); }
+  // Il run delle 00 UTC esce in mattinata: prima delle 9 UTC vale ancora quello di ieri
+  var now = new Date();
+  var run = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  if (now.getUTCHours() < 9) run = new Date(run.getTime() - 86400000);
+  document.getElementById('lammaRun').textContent =
+    '00 UTC del ' + run.toLocaleDateString('it-IT', { day: 'numeric', month: 'numeric' });
+
+  var campo = document.getElementById('lammaCampo'), area = document.getElementById('lammaArea');
+  var step = document.getElementById('lammaStep'), when = document.getElementById('lammaWhen');
+  var img = document.getElementById('lammaImg'), img2 = document.getElementById('lammaImg2');
+  var bust = Math.floor(Date.now() / 3600000); // cambia una volta l'ora
+
+  function nowIdx() {
+    var h = (Date.now() - run.getTime()) / 3600000, best = 1, diff = 1e9;
+    for (var i = 1; i <= MAX; i++) { var d = Math.abs(idxToH(i) - h); if (d < diff) { diff = d; best = i; } }
+    return best;
+  }
+  function url(f, i) { return 'https://www.lamma.toscana.it/models/' + MODEL + '/last/' + f + '.' + area.value + '.' + i + '.png?' + bust; }
+  function draw() {
+    var i = +step.value, t = new Date(run.getTime() + idxToH(i) * 3600000);
+    when.textContent = t.toLocaleString('it-IT', { weekday: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    img.src = url(campo.value, i);
+    // seconda mappa: se guardi il vento mostra l'onda, altrimenti il vento
+    img2.src = url(campo.value === 'wind10' ? 'swh' : 'wind10', i);
+  }
+  step.addEventListener('input', draw);
+  campo.addEventListener('change', draw);
+  area.addEventListener('change', draw);
+  document.getElementById('lammaPrev').onclick = function () { step.value = Math.max(1, +step.value - 1); draw(); };
+  document.getElementById('lammaNext').onclick = function () { step.value = Math.min(MAX, +step.value + 1); draw(); };
+  document.getElementById('lammaNow').onclick = function () { step.value = nowIdx(); draw(); };
+  step.value = nowIdx();
+  draw();
+})();
+</script>
+</body>
+</html>
