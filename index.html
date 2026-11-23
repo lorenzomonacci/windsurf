@@ -49,6 +49,8 @@
   .crop { overflow: hidden; border-radius: 8px; background: #000; }
   .crop iframe { height: 1800px; border-radius: 0; }
   #vedettaDati { pointer-events: none; }
+  .meteo { font-weight: normal; font-size: 14px; color: var(--muted); margin-left: 6px; white-space: nowrap; }
+  .meteo b { font-size: 20px; vertical-align: -2px; }
   .staz { display: flex; align-items: center; gap: 16px; background: var(--chip); border-radius: 8px;
           padding: 12px 14px; margin-bottom: 12px; }
   .staz .big { font-size: 30px; font-weight: 700; line-height: 1.1; }
@@ -61,7 +63,7 @@
 <body>
 <header>
   <div class="bar">
-    <h1>Windsurf bros ❤️</h1>
+    <h1>Windsurf bros ❤️ <span id="meteo" class="meteo" title="Tempo a Calambrone"></span></h1>
     <nav><a href="#live">Live</a><a href="#livorno">Livorno</a><a href="#wg">Windguru</a><a href="#lamma">LaMMA</a></nav>
   </div>
 </header>
@@ -173,6 +175,29 @@
   fit(); window.addEventListener('resize', fit);
   var img = document.getElementById('camLivorno'), base = img.src;
   setInterval(function () { img.src = base + '?t=' + Date.now(); }, 120000);
+})();
+
+/* ---------- Tempo a Calambrone (Open-Meteo, codici WMO) ---------- */
+(function () {
+  function icona(c, giorno) {
+    if (c >= 95) return ['⛈️', 'Temporale'];
+    if ((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) return ['🌧️', 'Pioggia'];
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ['❄️', 'Neve'];
+    if (c === 3 || c === 45 || c === 48) return ['☁️', 'Nuvoloso'];
+    if (c === 2) return [giorno ? '⛅' : '☁️', 'Poco nuvoloso'];
+    return [giorno ? '☀️' : '🌙', 'Sereno'];
+  }
+  function carica() {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=43.584&longitude=10.299&current=weather_code,is_day,temperature_2m&timezone=Europe%2FRome')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var i = icona(d.current.weather_code, d.current.is_day);
+        var el = document.getElementById('meteo');
+        el.innerHTML = '<b>' + i[0] + '</b> ' + Math.round(d.current.temperature_2m) + '°';
+        el.title = i[1] + ' a Calambrone';
+      }).catch(function () {});
+  }
+  carica(); setInterval(carica, 15 * 60000);
 })();
 
 /* ---------- Porto di Livorno: forza e direzione via proxy su muditabrewery.com ---------- */
