@@ -45,13 +45,13 @@
   input[type=range] { width: 100%; accent-color: var(--accent); }
   .when { font-weight: 600; }
   .lamma img { width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }
-  /* iframe più alti del loro contenuto: niente scroll interno, il dito scorre la pagina */
-  .crop { overflow: hidden; border-radius: 8px; background: #000; }
-  .crop iframe { height: 1800px; border-radius: 0; }
+  #camCalambrone { aspect-ratio: 16 / 9; background: #000; }
   #vedettaDati { pointer-events: none; }
   .meteo { font-weight: normal; font-size: 14px; color: var(--muted); margin-left: 6px; white-space: nowrap; }
   .meteo b { font-size: 20px; vertical-align: -2px; }
   .meteo .sole { margin-left: 8px; }
+  .meteo .ico { width: 18px; height: 18px; vertical-align: -4px; margin: 0 3px 0 6px; fill: none;
+                stroke: #f0a030; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .staz { display: flex; align-items: center; gap: 16px; background: var(--chip); border-radius: 8px;
           padding: 12px 14px; margin-bottom: 12px; }
   .staz .big { font-size: 30px; font-weight: 700; line-height: 1.1; }
@@ -81,10 +81,8 @@
   <section>
     <h2>Webcam Calambrone</h2>
     <p class="sub">Vedetta. <a href="https://vedetta.org/vedetta/calambrone2/index.php" target="_blank" rel="noopener">Apri con il grafico dell'ultima ora</a></p>
-    <div class="crop" id="camCrop">
-      <iframe title="Webcam Calambrone" scrolling="no" allow="autoplay; fullscreen"
-              src="https://vedetta.org/vedetta/calambrone2/index.php"></iframe>
-    </div>
+    <video id="camCalambrone" class="cam" muted autoplay playsinline controls
+           poster="https://vedetta.org/image-client/calambrone/image.jpg"></video>
   </section>
 
   <section id="livorno">
@@ -161,6 +159,7 @@
   </section>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>
 /* ---------- Vedetta: ricarica i dati ogni minuto ---------- */
 (function () {
@@ -169,16 +168,44 @@
   setInterval(function () { f.src = base + '?t=' + Date.now(); }, 60000);
 })();
 
-/* ---------- Webcam: mostra solo il video (16:9 + margine della pagina Vedetta) ---------- */
+/* ---------- Webcam Calambrone: stream HLS di Vedetta, link aggiornato dal proxy ---------- */
 (function () {
-  var box = document.getElementById('camCrop');
-  function fit() { var w = box.clientWidth; box.style.height = Math.round((w - 16) * 9 / 16 + 14) + 'px'; }
-  fit(); window.addEventListener('resize', fit);
+  var v = document.getElementById('camCalambrone'), hls = null;
+  function avvia() {
+    fetch('https://muditabrewery.com/windsurf/vedetta.php?t=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) return;
+        if (window.Hls && Hls.isSupported()) {
+          if (hls) hls.destroy();
+          hls = new Hls({ liveSyncDurationCount: 2 });
+          hls.loadSource(d.hls); hls.attachMedia(v);
+          hls.on(Hls.Events.ERROR, function (e, x) { if (x.fatal) setTimeout(avvia, 10000); });
+        } else {
+          v.src = d.hls; // Safari / iPhone: HLS nativo
+        }
+        v.muted = true; var p = v.play(); if (p) p.catch(function () {});
+      }).catch(function () { setTimeout(avvia, 30000); });
+  }
+  avvia();
+  // tornando sulla pagina dopo un po', riparte dal live
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) avvia(); });
+})();
+
+(function () {
   var img = document.getElementById('camLivorno'), base = img.src;
   setInterval(function () { img.src = base + '?t=' + Date.now(); }, 120000);
 })();
 
 /* ---------- Tempo a Calambrone (Open-Meteo, codici WMO) ---------- */
+// sole a metà sull'orizzonte, freccia su (alba) o giù (tramonto)
+function svgSole(freccia, nome) {
+  return '<svg class="ico" viewBox="0 0 24 24" aria-label="' + nome + '" role="img">' +
+    '<path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2v7"/><path d="' + freccia + '"/>' +
+    '<path d="M4.2 10.2l1.4 1.4M1 18h2M21 18h2M18.4 11.6l1.4-1.4M23 22H1"/></svg>';
+}
+var SVG_ALBA = svgSole('M8 6l4-4 4 4', 'Alba');
+var SVG_TRAMONTO = svgSole('M16 5l-4 4-4-4', 'Tramonto');
 (function () {
   function icona(c, giorno) {
     if (c >= 95) return ['⛈️', 'Temporale'];
@@ -196,7 +223,7 @@
         var el = document.getElementById('meteo');
         var alba = d.daily.sunrise[0].slice(11, 16), tram = d.daily.sunset[0].slice(11, 16);
         el.innerHTML = '<b>' + i[0] + '</b> ' + Math.round(d.current.temperature_2m) + '°' +
-                       ' <span class="sole">🌅 ' + alba + ' · 🌇 ' + tram + '</span>';
+                       ' <span class="sole">' + SVG_ALBA + alba + SVG_TRAMONTO + tram + '</span>';
         el.title = i[1] + ' a Calambrone';
       }).catch(function () {});
   }
