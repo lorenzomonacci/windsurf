@@ -46,7 +46,7 @@
   input[type=range] { width: 100%; accent-color: var(--accent); }
   .when { font-weight: 600; }
   .lamma img { width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }
-  .lamma [hidden] { display: none; }
+  @media (min-width: 1300px) { .grid3 { grid-template-columns: 1fr 1fr 1fr; } }
   /* raffiche MOLOCH: l'immagine copre il Centro-Nord (1180x980), ne mostro la Toscana e la legenda */
   .gust-map, .gust-leg { width: 100%; background-color: #fff; background-repeat: no-repeat; border-radius: 8px; }
   .gust-map { position: relative; aspect-ratio: 338 / 288; background-size: 349.1% auto; background-position: 48.8% 51.3%; }
@@ -177,9 +177,7 @@
         <option value="swh">Altezza onda</option>
         <option value="mwp">Periodo onda</option>
         <option value="sswh">Altezza swell</option>
-        <option value="smwp">Periodo swell</option>
-        <option value="gust">Raffiche (MOLOCH 1,5 km)</option>
-      </select>
+        <option value="smwp">Periodo swell</option>      </select>
       <select id="lammaArea">
         <option value="AE">Livorno</option>
         <option value="AD">Versilia</option>
@@ -190,14 +188,14 @@
       <span class="when" id="lammaWhen"></span>
     </div>
     <input type="range" id="lammaStep" min="1" max="75" value="1">
-    <div class="grid2" style="margin-top:10px">
+    <div class="grid2 grid3" style="margin-top:10px">
       <img id="lammaImg" alt="Mappa LaMMA">
-      <div id="gustBox" hidden>
+      <img id="lammaImg2" alt="Mappa LaMMA onda">
+      <div id="gustBox">
         <div class="gust-map" id="gustMap" role="img" aria-label="Mappa LaMMA raffiche"><span class="gust-pin" title="Calambrone"></span></div>
         <div class="gust-leg" id="gustLeg"></div>
         <p class="sub" id="gustNota" style="margin:6px 0 0"></p>
       </div>
-      <img id="lammaImg2" alt="Mappa LaMMA onda">
     </div>
   </section>
 </main>
@@ -478,7 +476,6 @@ document.querySelectorAll('[data-wg-model]').forEach(function (el) {
   // mappe orarie da +0 a +66 h (indici 1-67), solo area Centro-Nord
   var gRun = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 6));
   if (now.getUTCHours() < 13) gRun = new Date(gRun.getTime() - 86400000);
-  var gustBox = document.getElementById('gustBox');
   function drawGust(t) {
     var j = Math.round((t - gRun) / 3600000) + 1, nota = document.getElementById('gustNota');
     var mappa = document.getElementById('gustMap'), leg = document.getElementById('gustLeg');
@@ -495,9 +492,8 @@ document.querySelectorAll('[data-wg-model]').forEach(function (el) {
   function draw() {
     var i = +step.value, t = new Date(run.getTime() + idxToH(i) * 3600000);
     when.textContent = t.toLocaleString('it-IT', { weekday: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    var g = campo.value === 'gust';
-    img.hidden = g; gustBox.hidden = !g;
-    if (g) drawGust(t); else img.src = url(campo.value, i);
+    img.src = url(campo.value, i);
+    drawGust(t);
     // seconda mappa: se guardi il vento mostra l'onda, altrimenti il vento
     img2.src = url(campo.value === 'wind10' ? 'swh' : 'wind10', i);
   }
