@@ -97,7 +97,7 @@
     <h2>Quando uscire</h2>
     <div class="cal" id="cal"></div>
     <p class="sub" id="calTop" style="margin:10px 0 0"></p>
-    <p class="sub" style="margin:2px 0 0">Vento ICON-2I per i primi giorni, poi ECMWF. Onda IFS-WAM di Windguru.</p>
+    <p class="sub" style="margin:2px 0 0">Vento ICON-2I per i primi giorni, poi ECMWF. Onda LaMMA sotto costa, Windguru dove LaMMA non arriva.</p>
   </section>
 
   <!-- 1. ADESSO -->
@@ -306,9 +306,15 @@ var SVG_TRAMONTO = svgSole('M16 5l-4 4-4-4', 'Tramonto');
       if (kt == null) { kt = h.wind_speed_10m_ecmwf_ifs025[i]; dir = h.wind_direction_10m_ecmwf_ifs025[i]; mod = 'ECMWF'; }
       ore[t] = { kt: kt, dir: dir, mod: mod };
     });
-    // m.ore = onda Windguru IFS-WAM per ora italiana; m.hourly = riserva Open-Meteo
-    if (m.ore) Object.keys(ore).forEach(function (t) { if (m.ore[t] != null) ore[t].onda = m.ore[t]; });
-    else m.hourly.time.forEach(function (t, i) { if (ore[t]) ore[t].onda = m.hourly.wave_height[i]; });
+    // onda: LaMMA, dove manca Windguru IFS-WAM, se non rispondono tutti e due Open-Meteo
+    var lm = m[0] && m[0].ok ? m[0].ore : {}, wg = m[1] && m[1].ok ? m[1].ore : {};
+    Object.keys(ore).forEach(function (t) {
+      if (lm[t] != null) { ore[t].onda = lm[t]; ore[t].fonte = 'LaMMA'; }
+      else if (wg[t] != null) { ore[t].onda = wg[t]; ore[t].fonte = 'Windguru'; }
+    });
+    if (m[2]) m[2].hourly.time.forEach(function (t, i) {
+      if (ore[t] && ore[t].onda == null) { ore[t].onda = m[2].hourly.wave_height[i]; ore[t].fonte = 'Open-Meteo'; }
+    });
 
     var adesso = new Date(), cal = document.getElementById('cal');
     var html = '<div></div>', celle = { m: '', p: '' }, migliore = null;
@@ -333,7 +339,7 @@ var SVG_TRAMONTO = svgSole('M16 5l-4 4-4-4', 'Tramonto');
         var dir = direzioneMedia(sel.map(function (x) { return x.dir; }));
         var id = 'c' + d + turno[0];
         celle[turno[0]] += '<div class="c' + (finito ? ' pass' : '') + '" id="' + id + '" title="' + turno[3] + ': ' +
-          Math.round(kt) + ' kt da ' + dir + (onda != null ? ', onda ' + num(onda) + ' m' : '') + ' (' + sel[0].mod + ')">' +
+          Math.round(kt) + ' kt da ' + dir + (onda != null ? ', onda ' + num(onda) + ' m' : '') + ' (vento ' + sel[0].mod + (sel[0].fonte ? ', onda ' + sel[0].fonte : '') + ')">' +
           '<div class="s">' + stelle(voto) + '</div><div class="v">' + Math.round(kt) + ' ' + dir +
           (onda != null ? '<span class="o"><i> · </i>' + num(onda) + '<i> m</i></span>' : '') + '</div></div>';
         if (!finito && voto > 0 && (!migliore || voto > migliore.voto || (voto === migliore.voto && kt > migliore.kt)))
@@ -358,13 +364,15 @@ var SVG_TRAMONTO = svgSole('M16 5l-4 4-4-4', 'Tramonto');
       fetch('https://api.open-meteo.com/v1/forecast?' + base + '&hourly=wind_speed_10m,wind_direction_10m' +
             '&models=italia_meteo_arpae_icon_2i,ecmwf_ifs025&wind_speed_unit=kn&daily=sunset')
         .then(function (r) { return r.json(); }),
-      fetch('https://muditabrewery.com/windsurf/wg_onda.php')
-        .then(function (r) { return r.json(); })
-        .then(function (d) { if (!d.ok) throw 0; return d; })
-        .catch(function () {
-          return fetch('https://marine-api.open-meteo.com/v1/marine?' + base + '&hourly=wave_height')
-            .then(function (r) { return r.json(); });
-        })
+      Promise.all([
+        fetch('https://muditabrewery.com/windsurf/lamma_onda.php').then(function (r) { return r.json(); }).catch(function () { return null; }),
+        fetch('https://muditabrewery.com/windsurf/wg_onda.php').then(function (r) { return r.json(); }).catch(function () { return null; })
+      ]).then(function (o) {
+        if ((o[0] && o[0].ok) && (o[1] && o[1].ok)) return o.concat([null]);
+        return fetch('https://marine-api.open-meteo.com/v1/marine?' + base + '&hourly=wave_height')
+          .then(function (r) { return r.json(); }).catch(function () { return null; })
+          .then(function (om) { return o.concat([om && om.hourly ? om : null]); });
+      })
     ]).then(function (x) {
       // il daily arriva senza suffisso del modello solo se uno dei due lo fornisce: prendo il primo disponibile
       var dl = x[0].daily;
